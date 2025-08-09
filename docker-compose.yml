@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  superset_app:
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+    ports:
+      - "8088:8088"
+    container_name: superset_app
+    environment:
+      - SUPERSET_ENV=production
+      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
+    volumes:
+      - ./superset_config.py:/app/pythonpath/superset_config.py
+      - ./docker/requirements-local.txt:/app/requirements-local.txt
+

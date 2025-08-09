@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: superset-dashboard
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SUPERSET_SECRET_KEY
+        generateValue: true
+      - key: SUPERSET_LOAD_EXAMPLES
+        value: "no"
+      - key: SUPERSET_ENV
+        value: production
+
