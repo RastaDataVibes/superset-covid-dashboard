@@ -1,3 +1,4 @@
 apache-superset
 gunicorn
+gevent>=1.4
 
