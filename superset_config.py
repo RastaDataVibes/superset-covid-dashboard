@@ -8,6 +8,5 @@ SQLALCHEMY_DATABASE_URI = os.getenv(
 )
 
 
-
-
+ENABLE_EXAMPLES = False
 
