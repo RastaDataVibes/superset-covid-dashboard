@@ -4,4 +4,4 @@ gevent>=1.4
 pymysql
 mysqlclient
 psycopg2-binary
-
+faker
