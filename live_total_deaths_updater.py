@@ -123,18 +123,13 @@ def run_once():
         conn.close()
 
 
-def main():
-    while True:
-        try:
-            print("[INFO] Starting update cycle...")
-            run_once()
-            print(f"[INFO] Sleeping for {UPDATE_INTERVAL_SEC} seconds...")
-        except Exception as e:
-            print(f"[ERROR] Update cycle failed: {e}")
-        time.sleep(UPDATE_INTERVAL_SEC)
-
-
 if __name__ == "__main__":
-    main()
+    try:
+        print("[INFO] Starting update cycle...")
+        run_once()
+        print("[INFO] Update completed successfully.")
+    except Exception as e:
+        print(f"[ERROR] Update cycle failed: {e}")
+
 
 
