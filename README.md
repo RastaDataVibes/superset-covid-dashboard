@@ -35,8 +35,16 @@ This dashboard offers an insightful and dynamic way to explore Covid-19 mortalit
 ## 🎯 How to Use / Demo
 
 The dashboard is live and hosted on Render. Clients can view and interact with the real dashboard at:
+[(https://superset-covid-dashboard.onrender.com)]
 
-[**Live Demo URL**] — *(will be updated after deployment)*
+## 🎥 Superset Dashboard Walkthrough
+
+To view the dashboard demo:
+
+- [screenRecording.mov](screenRecording.mov)
+
+⚠️ GitHub may not preview the file in-browser.  
+Click **"View raw"** to download and play it locally.
 
 ## 📞 Get in Touch
 
