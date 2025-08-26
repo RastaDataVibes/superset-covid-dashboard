@@ -53,7 +53,7 @@ Feel free to contact me if you’re interested in custom dashboards, data visual
 ---
 
 *Built with ❤️ by RastaDataVibes (Opio Bethle)*  
-*Epidemiology Enthusiast & Data Visualization Expert*
+*Data Visualization Expert*
 
 ---
 
