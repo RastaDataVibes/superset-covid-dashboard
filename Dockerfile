@@ -5,6 +5,7 @@ USER root
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    default-libmysqlclient-dev \
     gcc \
     python3-dev \
     pkg-config \

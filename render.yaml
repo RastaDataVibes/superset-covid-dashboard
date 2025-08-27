@@ -3,7 +3,7 @@ services:
     name: superset-dashboard
     env: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.custom
     envVars:
       - key: SUPERSET_SECRET_KEY
         generateValue: true
