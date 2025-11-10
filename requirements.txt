@@ -1,6 +1,6 @@
 apache-superset
-gevent==24.2.1
-gunicorn==22.0.0
+gunicorn
+gevent>=1.4
 pymysql
 mysqlclient
 psycopg2-binary
