@@ -1,9 +1,8 @@
-# OFFICIAL SUPERSET + GEVENT + MYSQLCLIENT FIX
 FROM apache/superset:latest
 
 USER root
 
-# INSTALL EVERYTHING mysqlclient NEEDS + pkg-config
+# Fix mysqlclient pkg-config + build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     default-libmysqlclient-dev \
@@ -15,33 +14,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# SET FLAGS SO mysqlclient BUILDS WITHOUT pkg-config ERROR
-ENV MYSQLCLIENT_CFLAGS="-I/usr/include/mysql"
-ENV MYSQLCLIENT_LDFLAGS="-L/usr/lib/x86_64-linux-gnu -lmysqlclient"
+# Force gevent via gunicorn extra + drivers (BEFORE apache-superset overrides)
+RUN pip install --no-cache-dir gunicorn[gevent]==22.0.0 mysqlclient psycopg2-binary pymysql faker
 
-# INSTALL GEVENT + DRIVERS FIRST (BEFORE SUPERSET CAN BREAK IT)
-RUN pip install --no-cache-dir \
-    gevent==24.2.1 \
-    gunicorn==22.0.0 \
-    mysqlclient \
-    psycopg2-binary \
-    pymysql
-
-# NOW INSTALL YOUR REQUIREMENTS (apache-superset will NOT remove gevent)
+# Now safe to install your requirements (apache-superset keeps gevent)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# COPY CONFIG
+# Copy config
 COPY superset_config.py /app/pythonpath/superset_config.py
 
-# ADD MONKEY PATCH TO FIX "application context" ERROR
-RUN sed -i '1i import gevent.monkey; gevent.monkey.patch_all()' /app/pythonpath/superset_config.py
+# Monkey-patch for gevent context errors
+RUN echo "import gevent.monkey; gevent.monkey.patch_all()" > /tmp/patch.py && \
+    cat /tmp/patch.py /app/pythonpath/superset_config.py > /app/pythonpath/temp.py && \
+    mv /app/pythonpath/temp.py /app/pythonpath/superset_config.py && \
+    rm /tmp/patch.py
 
 USER superset
 
 EXPOSE 8088
 
-# PRODUCTION GEVENT CMD
+# Production gevent CMD
 CMD ["gunicorn", "--bind", "0.0.0.0:8088", \
      "--workers", "4", \
      "--worker-class", "gevent", \
