@@ -1,2 +1,8 @@
 apache-superset
+gunicorn
+gevent>=1.4
+mysqlclient
+psycopg2-binary
+pymysql
+faker
 
