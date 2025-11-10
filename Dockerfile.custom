@@ -2,7 +2,7 @@ FROM apache/superset:latest
 
 USER root
 
-# Fix mysqlclient pkg-config + build deps
+# Full mysqlclient deps + pkg-config fallback
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     default-libmysqlclient-dev \
@@ -14,31 +14,40 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Force gevent via gunicorn extra + drivers (BEFORE apache-superset overrides)
-RUN pip install --no-cache-dir gunicorn[gevent]==22.0.0 mysqlclient psycopg2-binary pymysql faker
+# Bypass pkg-config for mysqlclient
+ENV MYSQLCLIENT_CFLAGS="-I/usr/include/mysql"
+ENV MYSQLCLIENT_LDFLAGS="-L/usr/lib/x86_64-linux-gnu -lmysqlclient"
 
-# Now safe to install your requirements (apache-superset keeps gevent)
+# Install gevent + gunicorn + drivers FIRST (survives everything)
+RUN pip install --no-cache-dir \
+    gevent==24.2.1 \
+    gunicorn[gevent]==23.0.0 \
+    mysqlclient \
+    psycopg2-binary \
+    pymysql \
+    faker
+
+# Copy requirements (apache-superset only)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy config
+# Force reinstall Superset WITHOUT deps (keeps gevent/gunicorn intact)
+RUN pip install --no-cache-dir --force-reinstall --no-deps -r requirements.txt
+
+# Config + monkey-patch (sed inserts at top)
 COPY superset_config.py /app/pythonpath/superset_config.py
-
-# Monkey-patch for gevent context errors
-RUN echo "import gevent.monkey; gevent.monkey.patch_all()" > /tmp/patch.py && \
-    cat /tmp/patch.py /app/pythonpath/superset_config.py > /app/pythonpath/temp.py && \
-    mv /app/pythonpath/temp.py /app/pythonpath/superset_config.py && \
-    rm /tmp/patch.py
+RUN sed -i '1i import gevent.monkey; gevent.monkey.patch_all()' /app/pythonpath/superset_config.py
 
 USER superset
 
 EXPOSE 8088
 
-# Production gevent CMD
+# Production CMD with gevent
 CMD ["gunicorn", "--bind", "0.0.0.0:8088", \
      "--workers", "4", \
      "--worker-class", "gevent", \
      "--worker-connections", "1000", \
      "--timeout", "300", \
      "--keep-alive", "5", \
+     "--limit-request-line", "0", \
+     "--limit-request-field-size", "0", \
      "superset.app:create_app()"]
