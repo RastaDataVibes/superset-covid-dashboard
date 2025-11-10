@@ -1,28 +1,24 @@
-FROM apache/superset:latest
+FROM python:3.10-slim
 
-USER root
+ENV PYTHONUNBUFFERED=1
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    default-libmysqlclient-dev \
-    gcc \
-    python3-dev \
-    pkg-config \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev gcc && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /app/requirements.txt
+# Install gevent + gunicorn FIRST (this is the key)
+RUN pip install --no-cache-dir gevent==24.2.1 gunicorn==22.0.0
 
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Copy requirements and install Superset (gevent already there, no override)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY superset_config.py /app/pythonpath/superset_config.py
+# Copy app
+COPY . .
 
-USER superset
-
+# Expose port
 EXPOSE 8088
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8088", "--workers", "1", "--worker-class", "gevent", "--timeout", "300", "superset.app:create_app()"]
-
-
-
-
+# Production gevent CMD
+CMD ["gunicorn", "--bind", "0.0.0.0:8088", "--workers", "2", "--worker-class", "gevent", "--worker-connections", "1000", "--timeout", "300", "superset.app:create_app()"]
