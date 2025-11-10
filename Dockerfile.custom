@@ -1,24 +1,51 @@
-FROM python:3.10-slim
+# OFFICIAL SUPERSET + GEVENT + MYSQLCLIENT FIX
+FROM apache/superset:latest
 
-ENV PYTHONUNBUFFERED=1
-WORKDIR /app
+USER root
 
-# Install system deps
+# INSTALL EVERYTHING mysqlclient NEEDS + pkg-config
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+    pkg-config \
+    default-libmysqlclient-dev \
+    libmariadb-dev \
+    libmariadb-dev-compat \
+    build-essential \
+    gcc \
+    python3-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install gevent + gunicorn FIRST (this is the key)
-RUN pip install --no-cache-dir gevent==24.2.1 gunicorn==22.0.0
+# SET FLAGS SO mysqlclient BUILDS WITHOUT pkg-config ERROR
+ENV MYSQLCLIENT_CFLAGS="-I/usr/include/mysql"
+ENV MYSQLCLIENT_LDFLAGS="-L/usr/lib/x86_64-linux-gnu -lmysqlclient"
 
-# Copy requirements and install Superset (gevent already there, no override)
+# INSTALL GEVENT + DRIVERS FIRST (BEFORE SUPERSET CAN BREAK IT)
+RUN pip install --no-cache-dir \
+    gevent==24.2.1 \
+    gunicorn==22.0.0 \
+    mysqlclient \
+    psycopg2-binary \
+    pymysql
+
+# NOW INSTALL YOUR REQUIREMENTS (apache-superset will NOT remove gevent)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app
-COPY . .
+# COPY CONFIG
+COPY superset_config.py /app/pythonpath/superset_config.py
 
-# Expose port
+# ADD MONKEY PATCH TO FIX "application context" ERROR
+RUN sed -i '1i import gevent.monkey; gevent.monkey.patch_all()' /app/pythonpath/superset_config.py
+
+USER superset
+
 EXPOSE 8088
 
-# Production gevent CMD
-CMD ["gunicorn", "--bind", "0.0.0.0:8088", "--workers", "2", "--worker-class", "gevent", "--worker-connections", "1000", "--timeout", "300", "superset.app:create_app()"]
+# PRODUCTION GEVENT CMD
+CMD ["gunicorn", "--bind", "0.0.0.0:8088", \
+     "--workers", "4", \
+     "--worker-class", "gevent", \
+     "--worker-connections", "1000", \
+     "--timeout", "300", \
+     "--keep-alive", "5", \
+     "superset.app:create_app()"]
