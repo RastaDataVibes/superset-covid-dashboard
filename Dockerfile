@@ -21,7 +21,7 @@ USER superset
 
 EXPOSE 8088
 
-CMD ["gunicorn", "-w", "1", "-k", "gevent", "--timeout", "300", "-b", "0.0.0.0:8088", "superset.app:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8088", "--workers", "2", "--worker-class", "sync", "superset:app"]
 
 
 
