@@ -1,2 +1,5 @@
 apache-superset
+pymysql
+mysqlclient
+psycopg2-binary
 
