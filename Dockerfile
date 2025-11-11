@@ -1,9 +1,5 @@
-# Use official Apache Superset image as base
 FROM apache/superset:latest
-
 USER root
-
-# Install system dependencies for building Python packages and database drivers
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
@@ -12,26 +8,10 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     pkg-config \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Copy Python dependencies first
 COPY requirements.txt /app/requirements.txt
-
-# Install all Python dependencies in Superset’s Python environment
-RUN python3 -m pip install --upgrade pip \
- && pip install --no-cache-dir -r /app/requirements.txt
-
-# Copy Superset configuration
+RUN pip install --no-cache-dir gevent>=1.4 psycopg2-binary pymysql mysqlclient -r /app/requirements.txt
 COPY superset_config.py /app/pythonpath/superset_config.py
-
-# Fix permissions
-RUN chown -R superset:superset /app
-
-# Switch back to Superset user
 USER superset
-
-# Expose the Superset port
 EXPOSE 8088
-
-# Start Superset with Gunicorn using gevent worker
-CMD ["gunicorn", "-w", "2", "-k", "gevent", "--timeout", "300", "-b", "0.0.0.0:8088", "superset.app:create_app()"]
+CMD ["gunicorn", "-w", "1", "-k", "gevent", "--timeout", "300", "-b", "0.0.0.0:8088", "superset.app:create_app()"]
 
