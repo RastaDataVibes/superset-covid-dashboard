@@ -2,7 +2,7 @@ FROM apache/superset:latest
 
 USER root
 
-# FULL mysqlclient + pkg-config deps
+# Install system dependencies for mysqlclient + gevent
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     default-libmysqlclient-dev \
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV MYSQLCLIENT_CFLAGS="-I/usr/include/mysql"
 ENV MYSQLCLIENT_LDFLAGS="-L/usr/lib/x86_64-linux-gnu -lmysqlclient"
 
-# INSTALL GEVENT + GUNICORN + DRIVERS FIRST (survives apache-superset override)
+# Install gevent + gunicorn + drivers FIRST
 RUN pip install --no-cache-dir \
     gevent==24.2.1 \
     gunicorn[gevent]==23.0.0 \
@@ -27,18 +27,20 @@ RUN pip install --no-cache-dir \
     pymysql \
     faker
 
-# Copy and FORCE reinstall Superset (keeps gevent)
+# Copy requirements and reinstall Superset safely
 COPY requirements.txt .
 RUN pip install --no-cache-dir --force-reinstall --no-deps -r requirements.txt
 
-# Config + monkey patch
+# Copy config FIRST
 COPY superset_config.py /app/pythonpath/superset_config.py
+
+# THEN add monkey patch at the top
 RUN sed -i '1i import gevent.monkey; gevent.monkey.patch_all()' /app/pythonpath/superset_config.py
 
 USER superset
 EXPOSE 8088
 
-# PRODUCTION GEVENT CMD (free tier safe)
+# Production gevent CMD (free tier safe)
 CMD ["gunicorn", "--bind", "0.0.0.0:8088", \
      "--workers", "2", \
      "--worker-class", "gevent", \
