@@ -16,11 +16,15 @@ RUN apt-get update && apt-get install -y \
 # Copy Python dependencies first
 COPY requirements.txt /app/requirements.txt
 
-# Use Superset's virtualenv pip for all installs
-RUN /app/.venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+# Install all Python dependencies in Superset’s Python environment
+RUN python3 -m pip install --upgrade pip \
+ && pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy Superset configuration
 COPY superset_config.py /app/pythonpath/superset_config.py
+
+# Fix permissions
+RUN chown -R superset:superset /app
 
 # Switch back to Superset user
 USER superset
@@ -29,5 +33,5 @@ USER superset
 EXPOSE 8088
 
 # Start Superset with Gunicorn using gevent worker
-CMD ["/app/.venv/bin/gunicorn", "-w", "1", "-k", "gevent", "--timeout", "300", "-b", "0.0.0.0:8088", "superset.app:create_app()"]
+CMD ["gunicorn", "-w", "2", "-k", "gevent", "--timeout", "300", "-b", "0.0.0.0:8088", "superset.app:create_app()"]
 
