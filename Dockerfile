@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir gevent>=1.4 psycopg2-binary pymysql mysqlclient -r /app/requirements.txt
+RUN pip install --no-cache-dir gevent==22.10.2 psycopg2-binary pymysql mysqlclient -r /app/requirements.txt
 COPY superset_config.py /app/pythonpath/superset_config.py
 USER superset
 EXPOSE 8088
