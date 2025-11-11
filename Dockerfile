@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt /app/requirements.txt
 
 # Install Python dependencies including gevent and DB drivers
-RUN pip install --no-cache-dir gevent>=1.4 psycopg2-binary pymysql mysqlclient -r /app/requirements.txt
+RUN pip install --no-cache-dir "gevent>=1.4" psycopg2-binary pymysql mysqlclient -r /app/requirements.txt
 
 # Copy Superset configuration
 COPY superset_config.py /app/pythonpath/superset_config.py
