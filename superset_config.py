@@ -2,32 +2,29 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-# === SECURITY ===
-SECRET_KEY = os.environ.get("SECRET_KEY", "fallback-secret-change-in-prod")
+# Security
+SECRET_KEY = os.environ.get("SECRET_KEY", "fallback-change-in-prod")
 
-# === DATABASE ===
+# Database
 SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
-# === TIMEOUTS ===
+# Timeouts
 ENABLE_EXAMPLES = False
 SQLLAB_TIMEOUT = 300
 SUPERSET_WEBSERVER_TIMEOUT = 300
 SQLLAB_ASYNC_TIME_LIMIT_SEC = 300
 
-# === EMBEDDED DASHBOARDS (CRITICAL FOR YOUR BUTTON) ===
+# Embedded Dashboards
 FEATURE_FLAGS = {
     "EMBEDDED_SUPERSET": True,
 }
 
-# === GUEST TOKEN SUPPORT ===
-GUEST_ROLE_NAME = "Public"  # You must create this role in Superset UI
+# Guest Tokens
+GUEST_ROLE_NAME = "Public"
 GUEST_TOKEN_JWT_SECRET = os.environ.get("GUEST_TOKEN_JWT_SECRET", "change-me-in-prod")
 
-# === CORS (Allow your frontend) ===
+# CORS
 CORS_OPTIONS = {
     "supports_credentials": True,
-    "origins": ["*"],  # Change to your domain in prod
+    "origins": ["*"],  # Change to your domain in production
 }
-
-# === GEVENT MONKEY PATCH (ADDED BY DOCKERFILE - DO NOT REMOVE) ===
-# import gevent.monkey; gevent.monkey.patch_all()
